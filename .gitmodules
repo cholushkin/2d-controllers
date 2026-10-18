@@ -22,3 +22,6 @@
 [submodule "Unity/Game/Assets/Libs/rMVVM"]
 	path = Unity/Game/Assets/Libs/rMVVM
 	url = https://github.com/cholushkin/rmvvm.git
+[submodule "Unity/Game/Assets/Libs/FeelMotion"]
+	path = Unity/Game/Assets/Libs/FeelMotion
+	url = https://github.com/cholushkin/feel-motion.git
