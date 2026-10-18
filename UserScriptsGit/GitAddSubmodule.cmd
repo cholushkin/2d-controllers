@@ -1,0 +1,1 @@
+gitutils --action add_submodule --repo_url https://github.com/cholushkin/rmvvm.git --submodule_path Unity/Game/Assets/Libs/rMVVM

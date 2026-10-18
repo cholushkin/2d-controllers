@@ -1,6 +1,3 @@
-[submodule "ScriptUtils"]
-	path = ScriptUtils
-	url = https://github.com/cholushkin/script-utils.git
 [submodule "Unity/Game/Assets/Libs/Gamelib"]
 	path = Unity/Game/Assets/Libs/Gamelib
 	url = https://github.com/cholushkin/gamelib.git
@@ -22,3 +19,6 @@
 [submodule "DevConventions"]
     path = DevConventions
     url = https://github.com/cholushkin/dev-conventions.git
+[submodule "Unity/Game/Assets/Libs/rMVVM"]
+	path = Unity/Game/Assets/Libs/rMVVM
+	url = https://github.com/cholushkin/rmvvm.git
