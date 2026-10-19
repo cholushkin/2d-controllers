@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed1ee0ddd91c44846994ee386b536d0c, type: 3}
+  m_Name: CapsuleConfig
+  m_EditorClassIdentifier:
+  bodyRadius: 0.5
+  maxBatteries: 3
+  maxEnergy: 1
+  jumpHoldThreshold: 0.15
+  ground:
+    rollTorque: 12
+    maxAngularSpeed: 12
+    jumpImpulse: 4
+  underwater:
+    gravityScale: 0.15
+    linearDamping: 4
+    moveForce: 6
+    energyDrainPerSecond: 0.08
+  jumpAim:
+    timeScaleWhileAiming: 0.05
+    minPowerThreshold: 0.1
+    maxImpulse: 10
+    releaseOvershoot: 1.15
+    timeScaleRecoverDuration: 0.12
+  drill:
+    drillSpeed: 2
+    probeDistance: 0.6
+    carveRadius: 0.6
+  shoot:
+    fireInterval: 0.15
+    bulletSpeed: 14
+    bulletLifetime: 2.5
+    bulletRadius: 0.1
