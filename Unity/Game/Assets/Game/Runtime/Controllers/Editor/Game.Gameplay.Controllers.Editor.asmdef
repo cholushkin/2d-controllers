@@ -1,0 +1,19 @@
+{
+    "name": "Game.Gameplay.Controllers.Editor",
+    "rootNamespace": "Game.Gameplay.Controllers.Editor",
+    "references": [
+        "Game.Gameplay.Controllers",
+        "Unity.U2D.Physics"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

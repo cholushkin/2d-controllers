@@ -3,34 +3,34 @@ using UnityEngine.InputSystem;
 
 namespace Game.Gameplay.Controllers.Core
 {
-    // Drill reuses the "Interact" action: it already carries a Hold interaction in
-    // InputSystem_Actions.inputactions, matching the hold-to-drill gesture.
+    // Xbox pad mapping: Move=leftStick, Jump=A, Fire=X ("Attack" action), Drill=Y
+    // ("Interact" action), Boost=LT.
     public sealed class PlayerInputReader : IControllerInput
     {
         private readonly InputAction _move;
-        private readonly InputAction _aim;
         private readonly InputAction _jump;
-        private readonly InputAction _attack;
+        private readonly InputAction _fire;
         private readonly InputAction _drill;
+        private readonly InputAction _boost;
 
         public PlayerInputReader(InputActionAsset actions)
         {
             var player = actions.FindActionMap("Player", throwIfNotFound: true);
             _move = player.FindAction("Move", throwIfNotFound: true);
-            _aim = player.FindAction("Look", throwIfNotFound: true);
             _jump = player.FindAction("Jump", throwIfNotFound: true);
-            _attack = player.FindAction("Attack", throwIfNotFound: true);
+            _fire = player.FindAction("Attack", throwIfNotFound: true);
             _drill = player.FindAction("Interact", throwIfNotFound: true);
+            _boost = player.FindAction("Boost", throwIfNotFound: true);
         }
 
         public InputSample Sample()
         {
             return new InputSample(
                 move: _move.ReadValue<Vector2>(),
-                aim: _aim.ReadValue<Vector2>(),
                 jumpHeld: _jump.IsPressed(), jumpPressed: _jump.WasPressedThisFrame(), jumpReleased: _jump.WasReleasedThisFrame(),
-                attackHeld: _attack.IsPressed(), attackPressed: _attack.WasPressedThisFrame(), attackReleased: _attack.WasReleasedThisFrame(),
-                drillHeld: _drill.IsPressed(), drillPressed: _drill.WasPressedThisFrame(), drillReleased: _drill.WasReleasedThisFrame());
+                fireHeld: _fire.IsPressed(), firePressed: _fire.WasPressedThisFrame(), fireReleased: _fire.WasReleasedThisFrame(),
+                drillHeld: _drill.IsPressed(), drillPressed: _drill.WasPressedThisFrame(), drillReleased: _drill.WasReleasedThisFrame(),
+                boostHeld: _boost.IsPressed());
         }
     }
 }

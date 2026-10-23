@@ -16,6 +16,11 @@ namespace Game.Gameplay.Controllers.Capsule
 
         private Vector2 _drillDirection = Vector2.down;
 
+        public Vector2 DrillDirection => _drillDirection;
+        public Vector2 ProbeTip { get; private set; }
+        public float ProbeDistance => _settings.probeDistance;
+        public float CarveRadius => _settings.carveRadius;
+
         public CapsuleDrillState(CapsuleConfig.DrillSettings settings, DestructibleTerrain terrain)
         {
             _settings = settings;
@@ -53,6 +58,7 @@ namespace Game.Gameplay.Controllers.Capsule
         {
             var body = ctx.Body;
             var tip = body.position + _drillDirection * _settings.probeDistance;
+            ProbeTip = tip;
 
             if (_terrain != null && _terrain.HasRockAt(tip))
             {

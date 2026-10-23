@@ -49,10 +49,12 @@ namespace Game.Gameplay.Controllers.Core
             return false;
         }
 
-        private void OnDrawGizmosSelected()
+        private void OnDrawGizmos()
         {
             Gizmos.color = new Color(0.2f, 0.6f, 1f, 0.35f);
             Gizmos.DrawCube(transform.position, size);
+            Gizmos.color = new Color(0.2f, 0.6f, 1f, 0.9f);
+            Gizmos.DrawWireCube(transform.position, size);
         }
     }
 }

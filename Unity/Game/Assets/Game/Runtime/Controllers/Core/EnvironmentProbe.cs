@@ -18,10 +18,14 @@ namespace Game.Gameplay.Controllers.Core
         public bool IsGrounded(Vector2 position, float checkRadius)
         {
             var mask = PhysicsCategories.Ground | PhysicsCategories.Terrain;
-            return OverlapPoint(position + Vector2.down * checkRadius, mask)
-                || OverlapPoint(position + new Vector2(-checkRadius, -checkRadius * 0.5f), mask)
-                || OverlapPoint(position + new Vector2(checkRadius, -checkRadius * 0.5f), mask);
+            var (a, b, c) = GetGroundProbePoints(position, checkRadius);
+            return OverlapPoint(a, mask) || OverlapPoint(b, mask) || OverlapPoint(c, mask);
         }
+
+        public (Vector2 a, Vector2 b, Vector2 c) GetGroundProbePoints(Vector2 position, float checkRadius) => (
+            position + Vector2.down * checkRadius,
+            position + new Vector2(-checkRadius, -checkRadius * 0.5f),
+            position + new Vector2(checkRadius, -checkRadius * 0.5f));
 
         public bool IsSubmerged(Vector2 position)
         {

@@ -8,12 +8,12 @@ namespace Game.Gameplay.Controllers.Capsule
         public CapsuleStateId Id => CapsuleStateId.Underwater;
 
         private readonly CapsuleConfig.UnderwaterSettings _settings;
-        private readonly ShootingModule _shooting;
+        private readonly CapsuleConfig.BoostSettings _boost;
 
-        public CapsuleUnderwaterState(CapsuleConfig.UnderwaterSettings settings, ShootingModule shooting)
+        public CapsuleUnderwaterState(CapsuleConfig.UnderwaterSettings settings, CapsuleConfig.BoostSettings boost)
         {
             _settings = settings;
-            _shooting = shooting;
+            _boost = boost;
         }
 
         public void Enter(ControllerContext ctx)
@@ -30,7 +30,7 @@ namespace Game.Gameplay.Controllers.Capsule
             body.linearDamping = 0f;
         }
 
-        public void Tick(ControllerContext ctx, float deltaTime) => _shooting?.Tick(ctx, deltaTime);
+        public void Tick(ControllerContext ctx, float deltaTime) { }
 
         public void FixedTick(ControllerContext ctx, float fixedDeltaTime)
         {
@@ -38,10 +38,15 @@ namespace Game.Gameplay.Controllers.Capsule
             if (move.sqrMagnitude < 0.0001f)
                 return;
 
-            if (!ctx.Energy.TryDrainEnergy(_settings.energyDrainPerSecond * fixedDeltaTime))
+            var boosting = ctx.CurrentInput.BoostHeld;
+            var drain = _settings.energyDrainPerSecond + (boosting ? _boost.energyDrainPerSecond : 0f);
+            if (!ctx.Energy.TryDrainEnergy(drain * fixedDeltaTime))
                 return;
 
-            ctx.Body.ApplyForceToCenter(move.normalized * _settings.moveForce, true);
+            var force = _settings.moveForce * (boosting ? _boost.moveMultiplier : 1f);
+            var body = ctx.Body;
+            body.linearDamping = _settings.linearDamping * (boosting ? _boost.dampingMultiplier : 1f);
+            body.ApplyForceToCenter(move.normalized * force, true);
         }
 
         public bool CanTransitionTo(CapsuleStateId next, ControllerContext ctx) => true;

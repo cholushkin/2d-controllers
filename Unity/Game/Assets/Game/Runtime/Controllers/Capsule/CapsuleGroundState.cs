@@ -1,7 +1,6 @@
 using Game.Gameplay.Controllers.Core;
 using UnityEngine;
 
-
 namespace Game.Gameplay.Controllers.Capsule
 {
     public sealed class CapsuleGroundState : IControllerState<CapsuleStateId>
@@ -9,12 +8,12 @@ namespace Game.Gameplay.Controllers.Capsule
         public CapsuleStateId Id => CapsuleStateId.Ground;
 
         private readonly CapsuleConfig.GroundSettings _settings;
-        private readonly ShootingModule _shooting;
+        private readonly CapsuleConfig.BoostSettings _boost;
 
-        public CapsuleGroundState(CapsuleConfig.GroundSettings settings, ShootingModule shooting)
+        public CapsuleGroundState(CapsuleConfig.GroundSettings settings, CapsuleConfig.BoostSettings boost)
         {
             _settings = settings;
-            _shooting = shooting;
+            _boost = boost;
         }
 
         public void Enter(ControllerContext ctx)
@@ -27,7 +26,7 @@ namespace Game.Gameplay.Controllers.Capsule
 
         public void Exit(ControllerContext ctx) { }
 
-        public void Tick(ControllerContext ctx, float deltaTime) => _shooting?.Tick(ctx, deltaTime);
+        public void Tick(ControllerContext ctx, float deltaTime) { }
 
         public void FixedTick(ControllerContext ctx, float fixedDeltaTime)
         {
@@ -35,8 +34,11 @@ namespace Game.Gameplay.Controllers.Capsule
             if (Mathf.Abs(move.x) <= 0.01f)
                 return;
 
+            var boosting = ctx.CurrentInput.BoostHeld;
+            var torque = _settings.rollTorque * (boosting ? _boost.moveMultiplier : 1f);
+
             var body = ctx.Body;
-            body.ApplyTorque(-move.x * _settings.rollTorque, true);
+            body.ApplyTorque(-move.x * torque, true);
 
             var angular = body.angularVelocity;
             if (Mathf.Abs(angular) > _settings.maxAngularSpeed)

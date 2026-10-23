@@ -5,6 +5,7 @@ namespace Game.Gameplay.Controllers.Capsule
         Ground,
         Underwater,
         JumpAiming,
+        Shooting,
         Drilling
     }
 }

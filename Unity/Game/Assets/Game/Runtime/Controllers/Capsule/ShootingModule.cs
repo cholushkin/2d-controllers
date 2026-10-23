@@ -1,44 +1,83 @@
 using Game.Gameplay.Controllers.Core;
 using Game.Gameplay.Controllers.Director;
+using UnityEngine;
 
 namespace Game.Gameplay.Controllers.Capsule
 {
-    // Overlay usable from Ground/Underwater - not a full FSM state, since shooting
-    // doesn't block rolling or swimming.
+    // Owns the single "charge bullet" grown while X is held: spawns it once the owner
+    // is fully frozen (that freeze ramp is the de-facto first-shot cooldown), grows its
+    // radius/speed every fireInterval while still held, and launches it on release.
     public sealed class ShootingModule
     {
         private readonly CapsuleConfig.ShootSettings _settings;
+        private readonly float _reflectSpeedBonus;
         private readonly AimLineView _aimLine;
         private readonly PlasmaBulletSpawner _spawner;
 
-        private float _cooldown;
+        private PlasmaBullet _chargeBullet;
+        private int _chargeSteps;
+        private float _timer;
 
-        public ShootingModule(CapsuleConfig.ShootSettings settings, AimLineView aimLine, PlasmaBulletSpawner spawner)
+        public bool IsCharging => _chargeBullet != null;
+        public Vector2 ChargePosition => _chargeBullet != null ? _chargeBullet.Position : default;
+        public float ChargeRadius => _settings.baseRadius + _chargeSteps * _settings.radiusGrowth;
+
+        public ShootingModule(CapsuleConfig.ShootSettings settings, float reflectSpeedBonus, AimLineView aimLine, PlasmaBulletSpawner spawner)
         {
             _settings = settings;
+            _reflectSpeedBonus = reflectSpeedBonus;
             _aimLine = aimLine;
             _spawner = spawner;
         }
 
-        public void Tick(ControllerContext ctx, float deltaTime)
+        public void Tick(Vector2 muzzlePosition, Vector2 aimDirection, float aimPower, bool fullyFrozen, float unscaledDeltaTime)
         {
-            var input = ctx.CurrentInput;
-            _cooldown -= deltaTime;
-
-            if (!input.AttackHeld || input.Aim.sqrMagnitude < 0.0001f)
+            if (_chargeBullet == null)
             {
-                _aimLine?.Hide();
-                return;
+                if (!fullyFrozen)
+                    return;
+
+                _chargeBullet = _spawner.Spawn(muzzlePosition, _settings.baseRadius, _reflectSpeedBonus, _settings.bulletLifetime);
+                _chargeSteps = 0;
+                _timer = 0f;
+            }
+            else
+            {
+                _timer += unscaledDeltaTime;
+                if (_timer >= _settings.fireInterval && _chargeSteps < _settings.maxChargeSteps)
+                {
+                    _timer = 0f;
+                    _chargeSteps++;
+                    _chargeBullet.SetRadius(_settings.baseRadius + _chargeSteps * _settings.radiusGrowth);
+                }
             }
 
-            var direction = input.Aim.normalized;
-            _aimLine?.Show(ctx.Transform.position, direction, 1f);
+            if (aimPower >= 0.0001f)
+                _aimLine?.Show(muzzlePosition, aimDirection, aimPower);
+            else
+                _aimLine?.Hide();
+        }
 
-            if (_cooldown > 0f)
+        public void Release(Vector2 aimDirection)
+        {
+            _aimLine?.Hide();
+            if (_chargeBullet == null)
                 return;
 
-            _cooldown = _settings.fireInterval;
-            _spawner.Spawn(ctx.Body.position, direction, _settings);
+            var speed = _settings.baseSpeed + _chargeSteps * _settings.speedGrowth;
+            var direction = aimDirection.sqrMagnitude > 0.0001f ? aimDirection.normalized : Vector2.right;
+            _chargeBullet.Launch(direction * speed);
+            _chargeBullet = null;
+        }
+
+        public void Cancel()
+        {
+            _aimLine?.Hide();
+            if (_chargeBullet == null)
+                return;
+
+            _chargeBullet.Abort();
+            _chargeBullet = null;
         }
     }
 }

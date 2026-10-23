@@ -1,10 +1,11 @@
 using System;
+using Game.Gameplay.Controllers.Core;
 using UnityEngine;
 
 namespace Game.Gameplay.Controllers.Capsule
 {
-    // One asset holding all capsule mode settings (simpler to author than five
-    // separate ScriptableObjects); each nested section still maps 1:1 to a state.
+    // One asset holding all capsule mode settings (simpler to author than many
+    // separate ScriptableObjects); each nested section still maps 1:1 to a state/module.
     [CreateAssetMenu(menuName = "Controllers/Capsule Config", fileName = "CapsuleConfig")]
     public sealed class CapsuleConfig : ScriptableObject
     {
@@ -13,7 +14,6 @@ namespace Game.Gameplay.Controllers.Capsule
         {
             public float rollTorque = 12f;
             public float maxAngularSpeed = 12f;
-            public float jumpImpulse = 4f;
         }
 
         [Serializable]
@@ -28,11 +28,10 @@ namespace Game.Gameplay.Controllers.Capsule
         [Serializable]
         public sealed class JumpAimSettings
         {
-            public float timeScaleWhileAiming = 0.05f;
+            public float holdThreshold = 0.15f;
+            public float hopImpulse = 4f;
             public float minPowerThreshold = 0.1f;
             public float maxImpulse = 10f;
-            public float releaseOvershoot = 1.15f;
-            public float timeScaleRecoverDuration = 0.12f;
         }
 
         [Serializable]
@@ -46,21 +45,43 @@ namespace Game.Gameplay.Controllers.Capsule
         [Serializable]
         public sealed class ShootSettings
         {
-            public float fireInterval = 0.15f;
-            public float bulletSpeed = 14f;
+            public float holdThreshold = 0.15f;
+            public float fireInterval = 0.2f;
+            public float baseRadius = 0.1f;
+            public float baseSpeed = 14f;
+            public float radiusGrowth = 0.05f;
+            public float speedGrowth = 2f;
+            public int maxChargeSteps = 5;
             public float bulletLifetime = 2.5f;
-            public float bulletRadius = 0.1f;
+        }
+
+        [Serializable]
+        public sealed class ShieldSettings
+        {
+            public float radius = 1.2f;
+            public float duration = 1.5f;
+            public float reflectSpeedBonus = 4f;
+        }
+
+        [Serializable]
+        public sealed class BoostSettings
+        {
+            public float moveMultiplier = 1.8f;
+            public float dampingMultiplier = 0.5f;
+            public float energyDrainPerSecond = 0.1f;
         }
 
         public float bodyRadius = 0.5f;
         public int maxBatteries = 3;
         public float maxEnergy = 1f;
-        public float jumpHoldThreshold = 0.15f;
 
         public GroundSettings ground = new();
         public UnderwaterSettings underwater = new();
         public JumpAimSettings jumpAim = new();
         public DrillSettings drill = new();
         public ShootSettings shoot = new();
+        public ShieldSettings shield = new();
+        public BoostSettings boost = new();
+        public FreezeSettings freeze = new();
     }
 }
