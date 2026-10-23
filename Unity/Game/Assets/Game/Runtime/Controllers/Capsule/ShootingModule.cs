@@ -1,26 +1,27 @@
+using System.Collections.Generic;
 using Game.Gameplay.Controllers.Core;
 using Game.Gameplay.Controllers.Director;
 using UnityEngine;
 
 namespace Game.Gameplay.Controllers.Capsule
 {
-    // Owns the single "charge bullet" grown while X is held: spawns it once the owner
-    // is fully frozen (that freeze ramp is the de-facto first-shot cooldown), grows its
-    // radius/speed every fireInterval while still held, and launches it on release.
+    // Owns every bullet charging at the muzzle while X is held: once the owner is
+    // fully frozen (that freeze ramp is the de-facto first-shot cooldown), spawns a
+    // fresh bullet every fireInterval - or, with mergeNearbyBullets on, grows the
+    // nearest pending one instead of adding a separate bullet. Release launches
+    // everything still pending; the exit ramp then unfreezes.
     public sealed class ShootingModule
     {
         private readonly CapsuleConfig.ShootSettings _settings;
         private readonly float _reflectSpeedBonus;
         private readonly AimLineView _aimLine;
         private readonly PlasmaBulletSpawner _spawner;
+        private readonly List<PlasmaBullet> _pending = new();
 
-        private PlasmaBullet _chargeBullet;
-        private int _chargeSteps;
         private float _timer;
 
-        public bool IsCharging => _chargeBullet != null;
-        public Vector2 ChargePosition => _chargeBullet != null ? _chargeBullet.Position : default;
-        public float ChargeRadius => _settings.baseRadius + _chargeSteps * _settings.radiusGrowth;
+        public bool IsCharging => _pending.Count > 0;
+        public IReadOnlyList<PlasmaBullet> PendingBullets => _pending;
 
         public ShootingModule(CapsuleConfig.ShootSettings settings, float reflectSpeedBonus, AimLineView aimLine, PlasmaBulletSpawner spawner)
         {
@@ -32,23 +33,13 @@ namespace Game.Gameplay.Controllers.Capsule
 
         public void Tick(Vector2 muzzlePosition, Vector2 aimDirection, float aimPower, bool fullyFrozen, float unscaledDeltaTime)
         {
-            if (_chargeBullet == null)
-            {
-                if (!fullyFrozen)
-                    return;
-
-                _chargeBullet = _spawner.Spawn(muzzlePosition, _settings.baseRadius, _reflectSpeedBonus, _settings.bulletLifetime);
-                _chargeSteps = 0;
-                _timer = 0f;
-            }
-            else
+            if (fullyFrozen)
             {
                 _timer += unscaledDeltaTime;
-                if (_timer >= _settings.fireInterval && _chargeSteps < _settings.maxChargeSteps)
+                if (_pending.Count == 0 || _timer >= _settings.fireInterval)
                 {
                     _timer = 0f;
-                    _chargeSteps++;
-                    _chargeBullet.SetRadius(_settings.baseRadius + _chargeSteps * _settings.radiusGrowth);
+                    SpawnOrMerge(muzzlePosition);
                 }
             }
 
@@ -58,26 +49,56 @@ namespace Game.Gameplay.Controllers.Capsule
                 _aimLine?.Hide();
         }
 
+        private void SpawnOrMerge(Vector2 position)
+        {
+            if (_settings.mergeNearbyBullets)
+            {
+                PlasmaBullet nearest = null;
+                var nearestDistanceSq = float.MaxValue;
+                foreach (var candidate in _pending)
+                {
+                    var distanceSq = (candidate.Position - position).sqrMagnitude;
+                    if (distanceSq <= _settings.mergeRadius * _settings.mergeRadius && distanceSq < nearestDistanceSq)
+                    {
+                        nearest = candidate;
+                        nearestDistanceSq = distanceSq;
+                    }
+                }
+
+                if (nearest != null)
+                {
+                    nearest.Grow(_settings.radiusGrowth, _settings.speedGrowth);
+                    return;
+                }
+            }
+
+            if (_pending.Count >= _settings.maxActiveBullets)
+                return;
+
+            var bullet = _spawner.Spawn(position, _settings.baseRadius, _settings.baseSpeed, _reflectSpeedBonus, _settings.bulletLifetime);
+            _pending.Add(bullet);
+        }
+
         public void Release(Vector2 aimDirection)
         {
             _aimLine?.Hide();
-            if (_chargeBullet == null)
+            if (_pending.Count == 0)
                 return;
 
-            var speed = _settings.baseSpeed + _chargeSteps * _settings.speedGrowth;
             var direction = aimDirection.sqrMagnitude > 0.0001f ? aimDirection.normalized : Vector2.right;
-            _chargeBullet.Launch(direction * speed);
-            _chargeBullet = null;
+            foreach (var bullet in _pending)
+                bullet.Launch(direction);
+
+            _pending.Clear();
         }
 
         public void Cancel()
         {
             _aimLine?.Hide();
-            if (_chargeBullet == null)
-                return;
+            foreach (var bullet in _pending)
+                bullet.Abort();
 
-            _chargeBullet.Abort();
-            _chargeBullet = null;
+            _pending.Clear();
         }
     }
 }

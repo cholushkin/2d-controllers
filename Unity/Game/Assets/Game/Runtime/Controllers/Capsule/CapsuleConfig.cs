@@ -51,8 +51,13 @@ namespace Game.Gameplay.Controllers.Capsule
             public float baseSpeed = 14f;
             public float radiusGrowth = 0.05f;
             public float speedGrowth = 2f;
-            public int maxChargeSteps = 5;
             public float bulletLifetime = 2.5f;
+
+            [Tooltip("When on, a bullet spawned near an existing pending one grows it " +
+                "instead of adding a separate bullet.")]
+            public bool mergeNearbyBullets = true;
+            public float mergeRadius = 0.3f;
+            public int maxActiveBullets = 6;
         }
 
         [Serializable]
@@ -71,7 +76,6 @@ namespace Game.Gameplay.Controllers.Capsule
             public float energyDrainPerSecond = 0.1f;
         }
 
-        public float bodyRadius = 0.5f;
         public int maxBatteries = 3;
         public float maxEnergy = 1f;
 

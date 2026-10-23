@@ -17,13 +17,14 @@ namespace Game.Gameplay.Controllers.Pilot
         private IEnvironmentProbe _probe;
         private bool _active;
 
+        public PilotStateId CurrentState => _machine.CurrentStateId;
+
         private void Awake()
         {
             var world = PhysicsWorldBootstrap.World;
             _probe = PhysicsWorldBootstrap.Probe;
 
-            _body = LowLevelBody.CreateCircleBody(world, transform, config.bodyRadius,
-                Unity.U2D.Physics.PhysicsBody.BodyType.Dynamic, PhysicsCategories.Player,
+            _body = PoseBodyAuthoring.Resolve(gameObject, PhysicsCategories.Player,
                 PhysicsCategories.Ground | PhysicsCategories.Terrain);
 
             var input = new PlayerInputReader(inputActions);

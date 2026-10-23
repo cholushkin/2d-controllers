@@ -4,7 +4,8 @@
     "references": [
         "Unity.Mathematics",
         "Unity.InputSystem",
-        "Unity.Collections"
+        "Unity.Collections",
+        "Unity.U2D.Physics"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

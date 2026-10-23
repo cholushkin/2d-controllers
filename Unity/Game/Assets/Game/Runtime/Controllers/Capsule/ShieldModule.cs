@@ -48,6 +48,7 @@ namespace Game.Gameplay.Controllers.Capsule
             body.transformWriteMode = Unity.U2D.Physics.PhysicsBody.TransformWriteMode.Interpolate;
 
             var visual = go.AddComponent<SpriteRenderer>();
+            visual.sprite = ProceduralSprites.Circle;
             visual.color = new Color(0.5f, 0.85f, 1f, 0.35f);
 
             var bubble = go.AddComponent<ShieldBubble>();

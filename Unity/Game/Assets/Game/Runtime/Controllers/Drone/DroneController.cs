@@ -26,9 +26,9 @@ namespace Game.Gameplay.Controllers.Drone
             var world = PhysicsWorldBootstrap.World;
             _probe = PhysicsWorldBootstrap.Probe;
 
-            _body = LowLevelBody.CreateCircleBody(world, transform, config.bodyRadius,
-                Unity.U2D.Physics.PhysicsBody.BodyType.Dynamic, PhysicsCategories.Player,
-                PhysicsCategories.Ground | PhysicsCategories.Terrain, gravityScale: 0f);
+            _body = PoseBodyAuthoring.Resolve(gameObject, PhysicsCategories.Player,
+                PhysicsCategories.Ground | PhysicsCategories.Terrain);
+            _body.gravityScale = 0f;
 
             _energy = new EnergyModel(0, config.maxEnergy);
 

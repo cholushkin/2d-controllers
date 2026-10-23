@@ -2,8 +2,10 @@ using UnityEngine;
 
 namespace Game.Gameplay.Controllers.Core
 {
-    // Xbox-pad-referenced sample: Move is the left stick (movement AND aim/jump/drill
-    // direction - there is no separate aim stick). Jump=A, Fire=X, Drill=Y, Boost=LT.
+    // Xbox-pad-referenced sample: Move is the left stick (movement AND aim/drill
+    // direction - there is no separate aim stick). Jump=A, Fire=X ("use weapon"),
+    // Boost=LT; WeaponNext/Previous=RB/LB (mouse wheel / keyboard equivalents live in
+    // the action bindings, not here).
     public readonly struct InputSample
     {
         public readonly Vector2 Move;
@@ -16,18 +18,17 @@ namespace Game.Gameplay.Controllers.Core
         public readonly bool FirePressed;
         public readonly bool FireReleased;
 
-        public readonly bool DrillHeld;
-        public readonly bool DrillPressed;
-        public readonly bool DrillReleased;
-
         public readonly bool BoostHeld;
+
+        public readonly bool WeaponNextPressed;
+        public readonly bool WeaponPreviousPressed;
 
         public InputSample(
             Vector2 move,
             bool jumpHeld, bool jumpPressed, bool jumpReleased,
             bool fireHeld, bool firePressed, bool fireReleased,
-            bool drillHeld, bool drillPressed, bool drillReleased,
-            bool boostHeld)
+            bool boostHeld,
+            bool weaponNextPressed, bool weaponPreviousPressed)
         {
             Move = move;
             JumpHeld = jumpHeld;
@@ -36,10 +37,9 @@ namespace Game.Gameplay.Controllers.Core
             FireHeld = fireHeld;
             FirePressed = firePressed;
             FireReleased = fireReleased;
-            DrillHeld = drillHeld;
-            DrillPressed = drillPressed;
-            DrillReleased = drillReleased;
             BoostHeld = boostHeld;
+            WeaponNextPressed = weaponNextPressed;
+            WeaponPreviousPressed = weaponPreviousPressed;
         }
     }
 }

@@ -22,7 +22,6 @@ namespace Game.Gameplay.Controllers.Drone
             public float groundCheckRadius = 0.3f;
         }
 
-        public float bodyRadius = 0.25f;
         public float maxEnergy = 1f;
         public FlightSettings flight = new();
         public LandingSettings landing = new();

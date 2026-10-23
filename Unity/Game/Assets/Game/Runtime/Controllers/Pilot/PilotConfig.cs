@@ -21,7 +21,6 @@ namespace Game.Gameplay.Controllers.Pilot
             public float moveForce = 4f;
         }
 
-        public float bodyRadius = 0.25f;
         public GroundSettings ground = new();
         public SwimSettings swim = new();
     }

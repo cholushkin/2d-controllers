@@ -60,7 +60,8 @@ namespace Game.Gameplay.Controllers.Capsule
             if (drawFire && info.IsCharging)
             {
                 Gizmos.color = Color.cyan;
-                Gizmos.DrawWireSphere(info.ChargePosition, info.ChargeRadius);
+                foreach (var bullet in info.PendingBullets)
+                    Gizmos.DrawWireSphere(bullet.Position, bullet.Radius);
             }
 
             if (drawDrill)

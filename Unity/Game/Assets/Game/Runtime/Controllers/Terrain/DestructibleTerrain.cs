@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Game.Gameplay.Controllers.Core;
 using Unity.Collections;
 using UnityEngine;
@@ -8,14 +7,15 @@ using Random = Unity.Mathematics.Random;
 namespace Game.Gameplay.Controllers.Terrain
 {
     // Adapted from Assets/Game/RuntimeRnD/SpriteDestructionExample/DestructionController.cs:
-    // same sprite-outline-to-polygon + PhysicsDestructor.Fragment carving flow, but
-    // debris excludes the Player category and is reaped on a timer instead of on
-    // ground contact (see DebrisReaper).
+    // same PhysicsDestructor.Fragment carving flow, but debris excludes the Player
+    // category and is reaped on a timer instead of on ground contact (see
+    // DebrisReaper). The initial rock shape is authored in the editor via
+    // PhysicsPose + PhysicsArea* (any shape type) rather than a sprite outline -
+    // Awake consumes it once into its own low-level body, then discards it.
     [DisallowMultipleComponent]
     public sealed class DestructibleTerrain : MonoBehaviour
     {
         [SerializeField] private TerrainConfig config;
-        [SerializeField] private Sprite rockSprite;
         [SerializeField] private Vector2 fallbackBoxSize = new(6f, 3f);
         [SerializeField] private DebrisReaper debrisReaper;
         [SerializeField] private FragmentMeshRenderer fragmentRenderer;
@@ -25,7 +25,6 @@ namespace Game.Gameplay.Controllers.Terrain
         private Unity.U2D.Physics.PhysicsShape.SurfaceMaterial _rockSurfaceMaterial;
         private NativeArray<Unity.U2D.Physics.PolygonGeometry> _carveMask;
         private Random _rng = new(7919);
-        private readonly List<Vector2> _outline = new();
 
         private void Awake()
         {
@@ -44,7 +43,7 @@ namespace Game.Gameplay.Controllers.Terrain
             };
 
             BuildCarveMask();
-            SpawnRockBody();
+            SpawnRockFromAuthoredArea();
         }
 
         private void OnDestroy()
@@ -170,68 +169,56 @@ namespace Game.Gameplay.Controllers.Terrain
             vertices.Dispose();
         }
 
-        private void SpawnRockBody()
+        // Consumes whatever PhysicsPose + PhysicsArea* was authored in the editor
+        // (any shape type that resolves to polygon shapes, e.g. PhysicsAreaPolygon or
+        // PhysicsAreaContour) into this component's own low-level rock body, then
+        // discards the authoring components - from here on the rock only exists as
+        // the destructible body Carve()/HasRockAt() already know how to operate on.
+        private void SpawnRockFromAuthoredArea()
         {
-            if (rockSprite == null || rockSprite.GetPhysicsOutlineCount() == 0)
+            var pose = GetComponent<Unity.U2D.Physics.PhysicsPose>();
+            var authoredPolygons = new NativeList<Unity.U2D.Physics.PolygonGeometry>(Allocator.Temp);
+
+            if (pose != null && pose.body.isValid)
             {
-                SpawnRockBox();
-                return;
-            }
-
-            SpawnRockFromSprite();
-        }
-
-        // No sprite / no Custom Physics Shape assigned (e.g. in a fresh sandbox scene) -
-        // carve a plain rectangular slab instead, so the rock needs no Sprite Editor step.
-        private void SpawnRockBox()
-        {
-            var box = Unity.U2D.Physics.PolygonGeometry.CreateBox(fallbackBoxSize, 0f, Unity.U2D.Physics.PhysicsTransform.identity);
-            var polygons = new NativeArray<Unity.U2D.Physics.PolygonGeometry>(1, Allocator.Temp) { [0] = box };
-
-            var body = _world.CreateBody(new Unity.U2D.Physics.PhysicsBodyDefinition { position = transform.position });
-            body.CreateShape(box, new Unity.U2D.Physics.PhysicsShapeDefinition
-            {
-                contactFilter = _rockContactFilter,
-                surfaceMaterial = _rockSurfaceMaterial
-            });
-
-            fragmentRenderer?.Add(body, polygons);
-            polygons.Dispose();
-        }
-
-        private void SpawnRockFromSprite()
-        {
-            var composer = Unity.U2D.Physics.PhysicsComposer.Create(Allocator.Temp);
-            composer.useDelaunay = true;
-            var path = new NativeList<Vector2>(Allocator.Temp);
-
-            var outlines = rockSprite.GetPhysicsOutlineCount();
-            for (var i = 0; i < outlines; ++i)
-            {
-                if (rockSprite.GetPhysicsOutline(i, _outline) > 0)
+                using var shapes = pose.body.GetShapes();
+                foreach (var shape in shapes)
                 {
-                    foreach (var v in _outline)
-                        path.Add(v);
-                    composer.AddLayer(path.AsArray(), Unity.U2D.Physics.PhysicsTransform.identity);
+                    if (shape.shapeType == Unity.U2D.Physics.PhysicsShape.ShapeType.Polygon)
+                        authoredPolygons.Add(shape.polygonGeometry);
                 }
-                path.Clear();
             }
 
-            using var polygons = composer.CreatePolygonGeometry(vertexScale: Vector2.one);
-            path.Dispose();
-            composer.Destroy();
-
-            if (polygons.Length == 0)
-                return;
-
             var body = _world.CreateBody(new Unity.U2D.Physics.PhysicsBodyDefinition { position = transform.position });
-            using var batch = body.CreateShapeBatch(polygons, new Unity.U2D.Physics.PhysicsShapeDefinition
+            var shapeDef = new Unity.U2D.Physics.PhysicsShapeDefinition
             {
                 contactFilter = _rockContactFilter,
                 surfaceMaterial = _rockSurfaceMaterial
-            });
+            };
 
-            fragmentRenderer?.Add(body, polygons);
+            if (authoredPolygons.Length > 0)
+            {
+                using var batch = body.CreateShapeBatch(authoredPolygons.AsArray(), shapeDef);
+                fragmentRenderer?.Add(body, authoredPolygons.AsArray());
+            }
+            else
+            {
+                // No authored area (or it produced no polygon shapes) - fall back to
+                // a plain slab so the rock needs no editor-authoring step at all.
+                var box = Unity.U2D.Physics.PolygonGeometry.CreateBox(fallbackBoxSize, 0f, Unity.U2D.Physics.PhysicsTransform.identity);
+                var one = new NativeArray<Unity.U2D.Physics.PolygonGeometry>(1, Allocator.Temp) { [0] = box };
+                body.CreateShape(box, shapeDef);
+                fragmentRenderer?.Add(body, one);
+                one.Dispose();
+            }
+
+            authoredPolygons.Dispose();
+
+            var area = GetComponent<Unity.U2D.Physics.PhysicsArea>();
+            if (area != null)
+                Destroy(area);
+            if (pose != null)
+                Destroy(pose);
         }
     }
 }

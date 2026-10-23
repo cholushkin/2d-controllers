@@ -42,5 +42,16 @@ namespace Game.Gameplay.Controllers.Core
                 _consumedAsHold = false;
             }
         }
+
+        // Clears in-progress hold tracking - call when the meaning of "held" changes
+        // out from under the gesture (e.g. a weapon swap) so a hold consumed under
+        // the old meaning doesn't immediately fire under the new one.
+        public void Reset()
+        {
+            _heldTime = 0f;
+            _consumedAsHold = false;
+            TapRequested = false;
+            HoldBeginRequested = false;
+        }
     }
 }

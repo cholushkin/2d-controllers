@@ -16,6 +16,7 @@ namespace Game.Gameplay.Controllers.Capsule
         [SerializeField] private DestructibleTerrain terrain;
 
         private Unity.U2D.Physics.PhysicsBody _body;
+        private float _bodyRadius;
         private ControllerContext _context;
         private ControllerStateMachine<CapsuleStateId> _machine;
         private EnergyModel _energy;
@@ -25,12 +26,15 @@ namespace Game.Gameplay.Controllers.Capsule
         private FreezeController _freeze;
         private ShootingModule _shooting;
         private ShieldModule _shield;
+        private WeaponSelector _weapon;
         private CapsuleJumpAimingState _jumpAimState;
         private CapsuleDrillState _drillState;
         private bool _inputEnabled = true;
 
         public EnergyModel Energy => _energy;
         public CapsuleStateId CurrentState => _machine.CurrentStateId;
+        public WeaponId CurrentWeapon => _weapon.Current;
+        public int PendingBulletCount => _shooting.PendingBullets.Count;
         public DebugInfo DebugView => new(this);
 
         private void Awake()
@@ -38,16 +42,16 @@ namespace Game.Gameplay.Controllers.Capsule
             var world = PhysicsWorldBootstrap.World;
             _probe = PhysicsWorldBootstrap.Probe;
 
-            _body = LowLevelBody.CreateCircleBody(world, transform, config.bodyRadius,
-                Unity.U2D.Physics.PhysicsBody.BodyType.Dynamic, PhysicsCategories.Player,
-                PhysicsCategories.Ground | PhysicsCategories.Terrain | PhysicsCategories.Debris,
-                gravityScale: 1f);
+            _body = PoseBodyAuthoring.Resolve(gameObject, PhysicsCategories.Player,
+                PhysicsCategories.Ground | PhysicsCategories.Terrain | PhysicsCategories.Debris);
+            _bodyRadius = GetComponent<Unity.U2D.Physics.PhysicsAreaCircle>().activeGeometry.radius;
 
             _energy = new EnergyModel(config.maxBatteries, config.maxEnergy);
             _freeze = new FreezeController(config.freeze);
             _jumpGesture = new TapHoldGesture(config.jumpAim.holdThreshold);
             _fireGesture = new TapHoldGesture(config.shoot.holdThreshold);
             _shield = new ShieldModule(config.shield);
+            _weapon = new WeaponSelector();
 
             var spawner = new PlasmaBulletSpawner();
             _shooting = new ShootingModule(config.shoot, config.shield.reflectSpeedBonus, aimLine, spawner);
@@ -114,6 +118,11 @@ namespace Game.Gameplay.Controllers.Capsule
             var current = _machine.CurrentStateId;
             var input = _context.CurrentInput;
 
+            // A hold already in progress under one weapon's meaning must not carry
+            // over to the other's, so switching resets the fire gesture.
+            if (input.WeaponNextPressed) { _weapon.Next(); _fireGesture.Reset(); }
+            if (input.WeaponPreviousPressed) { _weapon.Previous(); _fireGesture.Reset(); }
+
             // Freeze-driving gestures run on unscaled time so they stay responsive
             // while Time.timeScale is being ramped down or is already at 0.
             _jumpGesture.Tick(input.JumpHeld, input.JumpReleased, Time.unscaledDeltaTime);
@@ -130,20 +139,25 @@ namespace Game.Gameplay.Controllers.Capsule
                     return;
                 }
 
-                if (_fireGesture.TapRequested)
-                    _shield.Activate(transform);
-
-                if (_fireGesture.HoldBeginRequested)
+                if (_weapon.Current == WeaponId.Gun)
                 {
-                    _machine.RequestTransition(CapsuleStateId.Shooting);
-                    return;
+                    if (_fireGesture.TapRequested)
+                        _shield.Activate(transform);
+
+                    if (_fireGesture.HoldBeginRequested)
+                    {
+                        _machine.RequestTransition(CapsuleStateId.Shooting);
+                        return;
+                    }
                 }
-
-                var drillDirection = input.Move.sqrMagnitude > 0.01f ? input.Move.normalized : Vector2.down;
-                if (input.DrillHeld && _probe.TryGetRockAhead(_body.position, drillDirection, config.drill.probeDistance, out _))
+                else // Drill - no freeze, just a raw hold like the old Y button.
                 {
-                    _machine.RequestTransition(CapsuleStateId.Drilling);
-                    return;
+                    var drillDirection = input.Move.sqrMagnitude > 0.01f ? input.Move.normalized : Vector2.down;
+                    if (input.FireHeld && _probe.TryGetRockAhead(_body.position, drillDirection, config.drill.probeDistance, out _))
+                    {
+                        _machine.RequestTransition(CapsuleStateId.Drilling);
+                        return;
+                    }
                 }
 
                 var submerged = _probe.IsSubmerged(_body.position);
@@ -156,7 +170,7 @@ namespace Game.Gameplay.Controllers.Capsule
                 var submerged = _probe.IsSubmerged(_body.position);
                 _machine.RequestTransition(submerged ? CapsuleStateId.Underwater : CapsuleStateId.Ground);
             }
-            else if (current == CapsuleStateId.Drilling && input.DrillReleased)
+            else if (current == CapsuleStateId.Drilling && input.FireReleased)
             {
                 var submerged = _probe.IsSubmerged(_body.position);
                 _machine.RequestTransition(submerged ? CapsuleStateId.Underwater : CapsuleStateId.Ground);
@@ -179,12 +193,12 @@ namespace Game.Gameplay.Controllers.Capsule
             public bool IsValid => _owner != null && _owner._body.isValid;
             public Vector2 Position => _owner._body.position;
             public Vector2 Velocity => _owner._body.linearVelocity;
-            public float BodyRadius => _owner.config.bodyRadius;
-            public bool IsGrounded => _owner._probe.IsGrounded(_owner._body.position, _owner.config.bodyRadius);
+            public float BodyRadius => _owner._bodyRadius;
+            public bool IsGrounded => _owner._probe.IsGrounded(_owner._body.position, _owner._bodyRadius);
             public bool IsSubmerged => _owner._probe.IsSubmerged(_owner._body.position);
 
             public (Vector2 a, Vector2 b, Vector2 c) GroundProbePoints =>
-                _owner._probe.GetGroundProbePoints(_owner._body.position, _owner.config.bodyRadius);
+                _owner._probe.GetGroundProbePoints(_owner._body.position, _owner._bodyRadius);
 
             public float FreezeProgress => _owner._freeze.Progress01;
 
@@ -195,8 +209,7 @@ namespace Game.Gameplay.Controllers.Capsule
 
             public bool IsShooting => _owner._machine.CurrentStateId == CapsuleStateId.Shooting;
             public bool IsCharging => _owner._shooting.IsCharging;
-            public Vector2 ChargePosition => _owner._shooting.ChargePosition;
-            public float ChargeRadius => _owner._shooting.ChargeRadius;
+            public System.Collections.Generic.IReadOnlyList<PlasmaBullet> PendingBullets => _owner._shooting.PendingBullets;
 
             public bool IsDrilling => _owner._machine.CurrentStateId == CapsuleStateId.Drilling;
             public Vector2 DrillDirection => _owner._drillState.DrillDirection;

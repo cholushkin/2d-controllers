@@ -6,7 +6,9 @@ namespace Game.Gameplay.Controllers.Core
     // Configures the shared low-level world once. World/Probe are static accessors
     // rather than a singleton MonoBehaviour reference, so controllers never depend on
     // this component's Awake order - PhysicsWorld.defaultWorld is always valid.
-    [DefaultExecutionOrder(-1000)]
+    // Runs before PhysicsExecutionOrder.First (-10000) so the gravity multiplier is
+    // applied before any editor-authored PhysicsPose/PhysicsArea builds a body.
+    [DefaultExecutionOrder(Unity.U2D.Physics.PhysicsExecutionOrder.First - 1)]
     public sealed class PhysicsWorldBootstrap : MonoBehaviour
     {
         [SerializeField] private float gravityMultiplier = 1f;
