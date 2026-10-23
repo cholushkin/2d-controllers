@@ -1,7 +1,7 @@
 using Game.Gameplay.Controllers.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Pilot
 {
@@ -11,7 +11,7 @@ namespace Game.Gameplay.Controllers.Pilot
         [SerializeField] private PilotConfig config;
         [SerializeField] private InputActionAsset inputActions;
 
-        private PhysicsBody _body;
+        private Unity.U2D.Physics.PhysicsBody _body;
         private ControllerContext _context;
         private ControllerStateMachine<PilotStateId> _machine;
         private IEnvironmentProbe _probe;
@@ -23,7 +23,7 @@ namespace Game.Gameplay.Controllers.Pilot
             _probe = PhysicsWorldBootstrap.Probe;
 
             _body = LowLevelBody.CreateCircleBody(world, transform, config.bodyRadius,
-                PhysicsBody.BodyType.Dynamic, PhysicsCategories.Player,
+                Unity.U2D.Physics.PhysicsBody.BodyType.Dynamic, PhysicsCategories.Player,
                 PhysicsCategories.Ground | PhysicsCategories.Terrain);
 
             var input = new PlayerInputReader(inputActions);

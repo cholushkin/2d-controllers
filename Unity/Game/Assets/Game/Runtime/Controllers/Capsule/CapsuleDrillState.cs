@@ -1,7 +1,7 @@
 using Game.Gameplay.Controllers.Core;
 using Game.Gameplay.Controllers.Terrain;
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Capsule
 {
@@ -29,7 +29,7 @@ namespace Game.Gameplay.Controllers.Capsule
                 _drillDirection = move.normalized;
 
             var body = ctx.Body;
-            body.type = PhysicsBody.BodyType.Kinematic;
+            body.type = Unity.U2D.Physics.PhysicsBody.BodyType.Kinematic;
             body.gravityScale = 0f;
             body.linearVelocity = Vector2.zero;
         }
@@ -37,7 +37,7 @@ namespace Game.Gameplay.Controllers.Capsule
         public void Exit(ControllerContext ctx)
         {
             var body = ctx.Body;
-            body.type = PhysicsBody.BodyType.Dynamic;
+            body.type = Unity.U2D.Physics.PhysicsBody.BodyType.Dynamic;
             body.gravityScale = 1f;
             body.linearVelocity = Vector2.zero;
         }

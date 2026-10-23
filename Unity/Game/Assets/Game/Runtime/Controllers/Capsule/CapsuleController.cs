@@ -3,7 +3,7 @@ using Game.Gameplay.Controllers.Director;
 using Game.Gameplay.Controllers.Terrain;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Capsule
 {
@@ -15,7 +15,7 @@ namespace Game.Gameplay.Controllers.Capsule
         [SerializeField] private AimLineView aimLine;
         [SerializeField] private DestructibleTerrain terrain;
 
-        private PhysicsBody _body;
+        private Unity.U2D.Physics.PhysicsBody _body;
         private ControllerContext _context;
         private ControllerStateMachine<CapsuleStateId> _machine;
         private EnergyModel _energy;
@@ -33,7 +33,7 @@ namespace Game.Gameplay.Controllers.Capsule
             _probe = PhysicsWorldBootstrap.Probe;
 
             _body = LowLevelBody.CreateCircleBody(world, transform, config.bodyRadius,
-                PhysicsBody.BodyType.Dynamic, PhysicsCategories.Player,
+                Unity.U2D.Physics.PhysicsBody.BodyType.Dynamic, PhysicsCategories.Player,
                 PhysicsCategories.Ground | PhysicsCategories.Terrain | PhysicsCategories.Debris,
                 gravityScale: 1f);
 

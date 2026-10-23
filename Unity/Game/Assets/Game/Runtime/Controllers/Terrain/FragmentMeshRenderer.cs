@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Terrain
 {
@@ -12,9 +12,9 @@ namespace Game.Gameplay.Controllers.Terrain
     {
         [SerializeField] private Material material;
 
-        private readonly Dictionary<PhysicsBody, Transform> _views = new();
+        private readonly Dictionary<Unity.U2D.Physics.PhysicsBody, Transform> _views = new();
 
-        public void Add(PhysicsBody body, NativeArray<PolygonGeometry> polygons)
+        public void Add(Unity.U2D.Physics.PhysicsBody body, NativeArray<Unity.U2D.Physics.PolygonGeometry> polygons)
         {
             var positions = new List<Vector3>();
             var triangles = new List<int>();
@@ -57,7 +57,7 @@ namespace Game.Gameplay.Controllers.Terrain
             _views[body] = go.transform;
         }
 
-        public void Remove(PhysicsBody body)
+        public void Remove(Unity.U2D.Physics.PhysicsBody body)
         {
             if (!_views.TryGetValue(body, out var view))
                 return;
@@ -84,7 +84,7 @@ namespace Game.Gameplay.Controllers.Terrain
 
                 var p = body.transform.position;
                 view.position = new Vector3(p.x, p.y, 0f);
-                view.rotation = Quaternion.Euler(0f, 0f, body.rotation.angle * Mathf.Rad2Deg);
+                view.rotation = Quaternion.Euler(0f, 0f, body.rotation.radians * Mathf.Rad2Deg);
             }
         }
     }

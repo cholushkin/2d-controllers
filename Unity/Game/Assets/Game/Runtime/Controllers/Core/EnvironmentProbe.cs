@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Core
 {
@@ -8,9 +8,9 @@ namespace Game.Gameplay.Controllers.Core
     // whose exact overloads were not verified against this engine build.
     public sealed class EnvironmentProbe : IEnvironmentProbe
     {
-        private readonly PhysicsWorld _world;
+        private readonly Unity.U2D.Physics.PhysicsWorld _world;
 
-        public EnvironmentProbe(PhysicsWorld world)
+        public EnvironmentProbe(Unity.U2D.Physics.PhysicsWorld world)
         {
             _world = world;
         }
@@ -34,9 +34,9 @@ namespace Game.Gameplay.Controllers.Core
             return OverlapPoint(hitPoint, PhysicsCategories.Terrain);
         }
 
-        private bool OverlapPoint(Vector2 point, PhysicsMask mask)
+        private bool OverlapPoint(Vector2 point, Unity.U2D.Physics.PhysicsMask mask)
         {
-            using var hits = _world.OverlapPoint(point, new PhysicsQuery.QueryFilter { categories = mask, hitCategories = mask });
+            using var hits = _world.OverlapPoint(point, new Unity.U2D.Physics.PhysicsQuery.QueryFilter { categories = mask, hitCategories = mask });
             return hits.Length > 0;
         }
     }

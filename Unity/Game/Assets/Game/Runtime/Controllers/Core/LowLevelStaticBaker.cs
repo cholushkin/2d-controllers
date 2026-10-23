@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Core
 {
@@ -10,30 +10,30 @@ namespace Game.Gameplay.Controllers.Core
     {
         [SerializeField] private Vector2 boxSize = new(3f, 1f);
 
-        private PhysicsBody _body;
+        private Unity.U2D.Physics.PhysicsBody _body;
 
         private void Start()
         {
             var world = PhysicsWorldBootstrap.World;
-            var bodyDef = new PhysicsBodyDefinition
+            var bodyDef = new Unity.U2D.Physics.PhysicsBodyDefinition
             {
-                type = PhysicsBody.BodyType.Static,
+                type = Unity.U2D.Physics.PhysicsBody.BodyType.Static,
                 position = transform.position
             };
 
             _body = world.CreateBody(bodyDef);
             _body.transformObject = transform;
 
-            var shapeDef = new PhysicsShapeDefinition
+            var shapeDef = new Unity.U2D.Physics.PhysicsShapeDefinition
             {
-                contactFilter = new PhysicsShape.ContactFilter
+                contactFilter = new Unity.U2D.Physics.PhysicsShape.ContactFilter
                 {
                     categories = PhysicsCategories.Ground,
                     contacts = PhysicsCategories.Player | PhysicsCategories.Debris | PhysicsCategories.Projectile
                 }
             };
 
-            _body.CreateShape(PolygonGeometry.CreateBox(boxSize, 0f, PhysicsTransform.identity), shapeDef);
+            _body.CreateShape(Unity.U2D.Physics.PolygonGeometry.CreateBox(boxSize, 0f, Unity.U2D.Physics.PhysicsTransform.identity), shapeDef);
         }
 
         private void OnDestroy()

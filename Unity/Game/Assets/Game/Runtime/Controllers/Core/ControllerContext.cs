@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Core
 {
@@ -8,16 +8,16 @@ namespace Game.Gameplay.Controllers.Core
     // states/processors that need them instead of being piled on here.
     public sealed class ControllerContext
     {
-        public PhysicsBody Body { get; }
+        public Unity.U2D.Physics.PhysicsBody Body { get; }
         public Transform Transform { get; }
-        public PhysicsWorld World { get; }
+        public Unity.U2D.Physics.PhysicsWorld World { get; }
         public IEnvironmentProbe Probe { get; }
         public IControllerInput Input { get; }
         public EnergyModel Energy { get; }
 
         public InputSample CurrentInput { get; private set; }
 
-        public ControllerContext(PhysicsBody body, Transform transform, PhysicsWorld world,
+        public ControllerContext(Unity.U2D.Physics.PhysicsBody body, Transform transform, Unity.U2D.Physics.PhysicsWorld world,
             IEnvironmentProbe probe, IControllerInput input, EnergyModel energy)
         {
             Body = body;

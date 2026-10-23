@@ -1,14 +1,14 @@
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Capsule
 {
-    public sealed class PlasmaBullet : MonoBehaviour, PhysicsCallbacks.IContactCallback
+    public sealed class PlasmaBullet : MonoBehaviour, Unity.U2D.Physics.PhysicsCallbacks.IContactCallback
     {
-        private PhysicsBody _body;
+        private Unity.U2D.Physics.PhysicsBody _body;
         private float _lifetime;
 
-        public void Initialize(PhysicsBody body, float lifetime)
+        public void Initialize(Unity.U2D.Physics.PhysicsBody body, float lifetime)
         {
             _body = body;
             _lifetime = lifetime;
@@ -31,7 +31,7 @@ namespace Game.Gameplay.Controllers.Capsule
                 _body.Destroy();
         }
 
-        public void OnContactBegin2D(PhysicsEvents.ContactBeginEvent beginEvent) => Destroy(gameObject);
-        public void OnContactEnd2D(PhysicsEvents.ContactEndEvent endEvent) { }
+        public void OnContactBegin2D(Unity.U2D.Physics.PhysicsEvents.ContactBeginEvent beginEvent) => Destroy(gameObject);
+        public void OnContactEnd2D(Unity.U2D.Physics.PhysicsEvents.ContactEndEvent endEvent) { }
     }
 }

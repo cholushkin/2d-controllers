@@ -2,44 +2,44 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 using Random = Unity.Mathematics.Random;
 
-public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.IContactCallback
+public sealed class DestructionController : MonoBehaviour, Unity.U2D.Physics.PhysicsCallbacks.IContactCallback
 {
-    private PhysicsWorld m_World;
+    private Unity.U2D.Physics.PhysicsWorld m_World;
     private FragmentRenderer m_Renderer;
     private Sprite m_Sprite;
     private DestructionSettings m_Settings;
 
-    private readonly PhysicsMask m_ObstacleMask = new(1);
-    private readonly PhysicsMask m_GroundMask = new(2);
-    private readonly PhysicsMask m_DestructibleMask = new(3);
-    private readonly PhysicsMask m_DebrisMask = new(4);
+    private readonly Unity.U2D.Physics.PhysicsMask m_ObstacleMask = new(1);
+    private readonly Unity.U2D.Physics.PhysicsMask m_GroundMask = new(2);
+    private readonly Unity.U2D.Physics.PhysicsMask m_DestructibleMask = new(3);
+    private readonly Unity.U2D.Physics.PhysicsMask m_DebrisMask = new(4);
 
-    private PhysicsShape.ContactFilter m_DestructibleContactFilter;
-    private PhysicsShape.SurfaceMaterial m_SurfaceMaterial;
-    private NativeArray<PolygonGeometry> m_FragmentMask;
-    private SegmentGeometry m_VirtualGround;
-    private PhysicsTransform m_VirtualGroundTransform;
+    private Unity.U2D.Physics.PhysicsShape.ContactFilter m_DestructibleContactFilter;
+    private Unity.U2D.Physics.PhysicsShape.SurfaceMaterial m_SurfaceMaterial;
+    private NativeArray<Unity.U2D.Physics.PolygonGeometry> m_FragmentMask;
+    private Unity.U2D.Physics.SegmentGeometry m_VirtualGround;
+    private Unity.U2D.Physics.PhysicsTransform m_VirtualGroundTransform;
     private Random m_Rng = new(1234);
     private readonly List<Vector2> m_OutlineVertices = new();
 
-    public void Initialize(PhysicsWorld world, FragmentRenderer renderer, Sprite sprite, DestructionSettings settings)
+    public void Initialize(Unity.U2D.Physics.PhysicsWorld world, FragmentRenderer renderer, Sprite sprite, DestructionSettings settings)
     {
         m_World = world;
         m_Renderer = renderer;
         m_Sprite = sprite;
         m_Settings = settings;
 
-        m_DestructibleContactFilter = new PhysicsShape.ContactFilter
+        m_DestructibleContactFilter = new Unity.U2D.Physics.PhysicsShape.ContactFilter
         {
             categories = m_DestructibleMask,
             contacts = m_GroundMask | m_DebrisMask | m_DestructibleMask
         };
 
-        m_VirtualGround = new SegmentGeometry { point1 = new Vector2(-100f, 0f), point2 = new Vector2(100f, 0f) };
-        m_VirtualGroundTransform = new PhysicsTransform(Vector2.down * 7.25f);
+        m_VirtualGround = new Unity.U2D.Physics.SegmentGeometry { point1 = new Vector2(-100f, 0f), point2 = new Vector2(100f, 0f) };
+        m_VirtualGroundTransform = new Unity.U2D.Physics.PhysicsTransform(Vector2.down * 7.25f);
 
         CreateFragmentMask();
     }
@@ -53,7 +53,7 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
     public void Detonate(Vector2 point)
     {
         DestructAt(point);
-        m_World.Explode(new PhysicsWorld.ExplosionDefinition
+        m_World.Explode(new Unity.U2D.Physics.PhysicsWorld.ExplosionDefinition
         {
             position = point,
             hitCategories = m_DebrisMask,
@@ -70,23 +70,23 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
             return;
         }
 
-        var outlines = m_Sprite.GetPhysicsShapeCount();
+        var outlines = m_Sprite.GetPhysicsOutlineCount();
         if (outlines == 0)
         {
             Debug.LogError("Sprite has no physics shape. Set Custom Physics Shape in the Sprite Editor.");
             return;
         }
 
-        var composer = PhysicsComposer.Create(Allocator.Temp);
+        var composer = Unity.U2D.Physics.PhysicsComposer.Create(Allocator.Temp);
         composer.useDelaunay = true;
         var path = new NativeList<Vector2>(Allocator.Temp);
 
         for (var i = 0; i < outlines; ++i)
         {
-            if (m_Sprite.GetPhysicsShape(i, m_OutlineVertices) > 0)
+            if (m_Sprite.GetPhysicsOutline(i, m_OutlineVertices) > 0)
             {
                 foreach (var v in m_OutlineVertices) path.Add(v);
-                composer.AddLayer(path.AsArray(), PhysicsTransform.identity);
+                composer.AddLayer(path.AsArray(), Unity.U2D.Physics.PhysicsTransform.identity);
             }
             path.Clear();
         }
@@ -98,8 +98,8 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
         if (polygons.Length == 0)
             return;
 
-        var body = m_World.CreateBody(new PhysicsBodyDefinition { position = worldPosition });
-        var shapeDef = new PhysicsShapeDefinition
+        var body = m_World.CreateBody(new Unity.U2D.Physics.PhysicsBodyDefinition { position = worldPosition });
+        var shapeDef = new Unity.U2D.Physics.PhysicsShapeDefinition
         {
             contactFilter = m_DestructibleContactFilter,
             contactEvents = true,
@@ -115,7 +115,7 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
         CreateFragmentMask();
 
         using var hits = m_World.OverlapPoint(hitPosition,
-            new PhysicsQuery.QueryFilter { categories = m_DestructibleMask, hitCategories = m_DestructibleMask });
+            new Unity.U2D.Physics.PhysicsQuery.QueryFilter { categories = m_DestructibleMask, hitCategories = m_DestructibleMask });
         if (hits.Length == 0)
             return;
 
@@ -124,13 +124,13 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
         var bodyVelocity = body.linearVelocity;
         using var shapes = body.GetShapes();
 
-        var targetPolygons = new NativeList<PolygonGeometry>(shapes.Length, Allocator.Temp);
+        var targetPolygons = new NativeList<Unity.U2D.Physics.PolygonGeometry>(shapes.Length, Allocator.Temp);
         foreach (var shape in shapes)
         {
-            if (shape.shapeType == PhysicsShape.ShapeType.Polygon)
+            if (shape.shapeType == Unity.U2D.Physics.PhysicsShape.ShapeType.Polygon)
                 targetPolygons.Add(shape.polygonGeometry);
         }
-        var target = new PhysicsDestructor.FragmentGeometry(body.transform, targetPolygons.AsReadOnly());
+        var target = new Unity.U2D.Physics.PhysicsDestructor.FragmentGeometry(body.transform, targetPolygons.AsReadOnly());
         targetPolygons.Dispose();
 
         var points = new NativeArray<Vector2>(m_Settings.fragmentCount, Allocator.Temp);
@@ -142,13 +142,13 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
             points[i] = hitPosition + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
         }
 
-        var mask = new PhysicsDestructor.FragmentGeometry(hitPosition, m_FragmentMask);
-        using var results = PhysicsDestructor.Fragment(target, mask, points, Allocator.Temp);
+        var mask = new Unity.U2D.Physics.PhysicsDestructor.FragmentGeometry(hitPosition, m_FragmentMask);
+        using var results = Unity.U2D.Physics.PhysicsDestructor.Fragment(target, mask, points, Allocator.Temp);
         points.Dispose();
 
         RemovePiece(body);
 
-        m_SurfaceMaterial = new PhysicsShape.SurfaceMaterial
+        m_SurfaceMaterial = new Unity.U2D.Physics.PhysicsShape.SurfaceMaterial
         {
             friction = m_Settings.fragmentFriction,
             bounciness = m_Settings.fragmentBounciness,
@@ -156,10 +156,10 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
         };
 
         var fragmentTransform = results.transform;
-        var staticDef = new PhysicsBodyDefinition { position = fragmentTransform.position, rotation = fragmentTransform.rotation };
-        var dynamicDef = new PhysicsBodyDefinition
+        var staticDef = new Unity.U2D.Physics.PhysicsBodyDefinition { position = fragmentTransform.position, rotation = fragmentTransform.rotation };
+        var dynamicDef = new Unity.U2D.Physics.PhysicsBodyDefinition
         {
-            type = PhysicsBody.BodyType.Dynamic,
+            type = Unity.U2D.Physics.PhysicsBody.BodyType.Dynamic,
             fastCollisionsAllowed = true,
             position = fragmentTransform.position,
             rotation = fragmentTransform.rotation,
@@ -175,7 +175,7 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
                 var island = results.unbrokenGeometry.GetSubArray(range.start, range.length);
                 var asDynamic = true;
 
-                if (bodyType == PhysicsBody.BodyType.Static)
+                if (bodyType == Unity.U2D.Physics.PhysicsBody.BodyType.Static)
                 {
                     foreach (var geometry in island)
                     {
@@ -187,7 +187,7 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
                 }
 
                 var islandBody = m_World.CreateBody(asDynamic ? dynamicDef : staticDef);
-                var shapeDef = new PhysicsShapeDefinition
+                var shapeDef = new Unity.U2D.Physics.PhysicsShapeDefinition
                 {
                     contactFilter = m_DestructibleContactFilter,
                     contactEvents = true,
@@ -207,9 +207,9 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
         if (m_Settings.createFragments && results.brokenGeometry.Length > 0)
         {
             using var bodies = m_World.CreateBodyBatch(dynamicDef, results.brokenGeometry.Length);
-            var debrisDef = new PhysicsShapeDefinition
+            var debrisDef = new Unity.U2D.Physics.PhysicsShapeDefinition
             {
-                contactFilter = new PhysicsShape.ContactFilter
+                contactFilter = new Unity.U2D.Physics.PhysicsShape.ContactFilter
                 {
                     categories = m_DebrisMask,
                     contacts = m_GroundMask | m_DestructibleMask | m_ObstacleMask | m_DebrisMask
@@ -225,7 +225,7 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
                 var shape = piece.CreateShape(geometry, debrisDef);
                 shape.callbackTarget = this;
 
-                var one = new NativeArray<PolygonGeometry>(1, Allocator.Temp) { [0] = geometry };
+                var one = new NativeArray<Unity.U2D.Physics.PolygonGeometry>(1, Allocator.Temp) { [0] = geometry };
                 m_Renderer.Add(piece, one);
                 one.Dispose();
             }
@@ -244,18 +244,18 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
             var r = m_Rng.NextFloat(m_Settings.fragmentRadius * 0.9f, m_Settings.fragmentRadius * 1.1f);
             vertices.Add(new Vector2(Mathf.Cos(angle) * r, Mathf.Sin(angle) * r));
         }
-        m_FragmentMask = PolygonGeometry.CreatePolygons(vertices.AsArray(), PhysicsTransform.identity, Vector2.one, Allocator.Persistent);
+        m_FragmentMask = Unity.U2D.Physics.PolygonGeometry.CreatePolygons(vertices.AsArray(), Unity.U2D.Physics.PhysicsTransform.identity, Vector2.one, Allocator.Persistent);
         vertices.Dispose();
     }
 
-    private void RemovePiece(PhysicsBody body)
+    private void RemovePiece(Unity.U2D.Physics.PhysicsBody body)
     {
         m_Renderer.Remove(body);
         body.Destroy();
     }
 
     // Debris that lands on the ground is removed to keep the scene clean.
-    public void OnContactBegin2D(PhysicsEvents.ContactBeginEvent beginEvent)
+    public void OnContactBegin2D(Unity.U2D.Physics.PhysicsEvents.ContactBeginEvent beginEvent)
     {
         var a = beginEvent.shapeA;
         var b = beginEvent.shapeB;
@@ -269,5 +269,5 @@ public sealed class DestructionController : MonoBehaviour, PhysicsCallbacks.ICon
         RemovePiece(debris.body);
     }
 
-    public void OnContactEnd2D(PhysicsEvents.ContactEndEvent endEvent) { }
+    public void OnContactEnd2D(Unity.U2D.Physics.PhysicsEvents.ContactEndEvent endEvent) { }
 }

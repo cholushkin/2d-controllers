@@ -1,6 +1,6 @@
 using Game.Gameplay.Controllers.Core;
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Capsule
 {
@@ -20,7 +20,7 @@ namespace Game.Gameplay.Controllers.Capsule
         public void Enter(ControllerContext ctx)
         {
             var body = ctx.Body;
-            body.type = PhysicsBody.BodyType.Dynamic;
+            body.type = Unity.U2D.Physics.PhysicsBody.BodyType.Dynamic;
             body.gravityScale = 1f;
             body.linearDamping = 0f;
         }

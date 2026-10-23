@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Game.Gameplay.Controllers.Core;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 using Random = Unity.Mathematics.Random;
 
 namespace Game.Gameplay.Controllers.Terrain
@@ -20,10 +20,10 @@ namespace Game.Gameplay.Controllers.Terrain
         [SerializeField] private DebrisReaper debrisReaper;
         [SerializeField] private FragmentMeshRenderer fragmentRenderer;
 
-        private PhysicsWorld _world;
-        private PhysicsShape.ContactFilter _rockContactFilter;
-        private PhysicsShape.SurfaceMaterial _rockSurfaceMaterial;
-        private NativeArray<PolygonGeometry> _carveMask;
+        private Unity.U2D.Physics.PhysicsWorld _world;
+        private Unity.U2D.Physics.PhysicsShape.ContactFilter _rockContactFilter;
+        private Unity.U2D.Physics.PhysicsShape.SurfaceMaterial _rockSurfaceMaterial;
+        private NativeArray<Unity.U2D.Physics.PolygonGeometry> _carveMask;
         private Random _rng = new(7919);
         private readonly List<Vector2> _outline = new();
 
@@ -31,13 +31,13 @@ namespace Game.Gameplay.Controllers.Terrain
         {
             _world = PhysicsWorldBootstrap.World;
 
-            _rockContactFilter = new PhysicsShape.ContactFilter
+            _rockContactFilter = new Unity.U2D.Physics.PhysicsShape.ContactFilter
             {
                 categories = PhysicsCategories.Terrain,
                 contacts = PhysicsCategories.Player | PhysicsCategories.Ground | PhysicsCategories.Terrain |
                            PhysicsCategories.Debris | PhysicsCategories.Projectile
             };
-            _rockSurfaceMaterial = new PhysicsShape.SurfaceMaterial
+            _rockSurfaceMaterial = new Unity.U2D.Physics.PhysicsShape.SurfaceMaterial
             {
                 friction = config.fragmentFriction,
                 bounciness = config.fragmentBounciness
@@ -55,7 +55,7 @@ namespace Game.Gameplay.Controllers.Terrain
 
         public bool HasRockAt(Vector2 point)
         {
-            using var hits = _world.OverlapPoint(point, new PhysicsQuery.QueryFilter
+            using var hits = _world.OverlapPoint(point, new Unity.U2D.Physics.PhysicsQuery.QueryFilter
             {
                 categories = PhysicsCategories.Terrain,
                 hitCategories = PhysicsCategories.Terrain
@@ -65,7 +65,7 @@ namespace Game.Gameplay.Controllers.Terrain
 
         public void Carve(Vector2 point, float radius)
         {
-            using var hits = _world.OverlapPoint(point, new PhysicsQuery.QueryFilter
+            using var hits = _world.OverlapPoint(point, new Unity.U2D.Physics.PhysicsQuery.QueryFilter
             {
                 categories = PhysicsCategories.Terrain,
                 hitCategories = PhysicsCategories.Terrain
@@ -76,14 +76,14 @@ namespace Game.Gameplay.Controllers.Terrain
             var body = hits[0].shape.body;
             using var shapes = body.GetShapes();
 
-            var targetPolygons = new NativeList<PolygonGeometry>(shapes.Length, Allocator.Temp);
+            var targetPolygons = new NativeList<Unity.U2D.Physics.PolygonGeometry>(shapes.Length, Allocator.Temp);
             foreach (var shape in shapes)
             {
-                if (shape.shapeType == PhysicsShape.ShapeType.Polygon)
+                if (shape.shapeType == Unity.U2D.Physics.PhysicsShape.ShapeType.Polygon)
                     targetPolygons.Add(shape.polygonGeometry);
             }
 
-            var target = new PhysicsDestructor.FragmentGeometry(body.transform, targetPolygons.AsReadOnly());
+            var target = new Unity.U2D.Physics.PhysicsDestructor.FragmentGeometry(body.transform, targetPolygons.AsReadOnly());
             targetPolygons.Dispose();
 
             var points = new NativeArray<Vector2>(config.fragmentCount, Allocator.Temp);
@@ -95,8 +95,8 @@ namespace Game.Gameplay.Controllers.Terrain
                 points[i] = point + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * r;
             }
 
-            var mask = new PhysicsDestructor.FragmentGeometry(point, _carveMask);
-            using var results = PhysicsDestructor.Fragment(target, mask, points, Allocator.Temp);
+            var mask = new Unity.U2D.Physics.PhysicsDestructor.FragmentGeometry(point, _carveMask);
+            using var results = Unity.U2D.Physics.PhysicsDestructor.Fragment(target, mask, points, Allocator.Temp);
             points.Dispose();
 
             fragmentRenderer?.Remove(body);
@@ -106,9 +106,9 @@ namespace Game.Gameplay.Controllers.Terrain
 
             if (results.unbrokenGeometry.Length > 0)
             {
-                var staticDef = new PhysicsBodyDefinition { position = fragmentTransform.position, rotation = fragmentTransform.rotation };
+                var staticDef = new Unity.U2D.Physics.PhysicsBodyDefinition { position = fragmentTransform.position, rotation = fragmentTransform.rotation };
                 var remainder = _world.CreateBody(staticDef);
-                using var batch = remainder.CreateShapeBatch(results.unbrokenGeometry, new PhysicsShapeDefinition
+                using var batch = remainder.CreateShapeBatch(results.unbrokenGeometry, new Unity.U2D.Physics.PhysicsShapeDefinition
                 {
                     contactFilter = _rockContactFilter,
                     surfaceMaterial = _rockSurfaceMaterial
@@ -121,11 +121,11 @@ namespace Game.Gameplay.Controllers.Terrain
                 SpawnDebris(fragmentTransform, results.brokenGeometry);
         }
 
-        private void SpawnDebris(PhysicsTransform fragmentTransform, NativeArray<PolygonGeometry> brokenGeometry)
+        private void SpawnDebris(Unity.U2D.Physics.PhysicsTransform fragmentTransform, NativeArray<Unity.U2D.Physics.PolygonGeometry> brokenGeometry)
         {
-            var debrisDef = new PhysicsBodyDefinition
+            var debrisDef = new Unity.U2D.Physics.PhysicsBodyDefinition
             {
-                type = PhysicsBody.BodyType.Dynamic,
+                type = Unity.U2D.Physics.PhysicsBody.BodyType.Dynamic,
                 fastCollisionsAllowed = true,
                 position = fragmentTransform.position,
                 rotation = fragmentTransform.rotation,
@@ -133,9 +133,9 @@ namespace Game.Gameplay.Controllers.Terrain
             };
             using var bodies = _world.CreateBodyBatch(debrisDef, brokenGeometry.Length);
 
-            var debrisShapeDef = new PhysicsShapeDefinition
+            var debrisShapeDef = new Unity.U2D.Physics.PhysicsShapeDefinition
             {
-                contactFilter = new PhysicsShape.ContactFilter
+                contactFilter = new Unity.U2D.Physics.PhysicsShape.ContactFilter
                 {
                     categories = PhysicsCategories.Debris,
                     // Deliberately excludes PhysicsCategories.Player.
@@ -150,7 +150,7 @@ namespace Game.Gameplay.Controllers.Terrain
                 var geometry = brokenGeometry[i];
                 piece.CreateShape(geometry, debrisShapeDef);
 
-                var one = new NativeArray<PolygonGeometry>(1, Allocator.Temp) { [0] = geometry };
+                var one = new NativeArray<Unity.U2D.Physics.PolygonGeometry>(1, Allocator.Temp) { [0] = geometry };
                 fragmentRenderer?.Add(piece, one);
                 one.Dispose();
 
@@ -166,13 +166,13 @@ namespace Game.Gameplay.Controllers.Terrain
             for (var angle = 0f; angle < tau; angle += stride)
                 vertices.Add(new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * config.fragmentRadius);
 
-            _carveMask = PolygonGeometry.CreatePolygons(vertices.AsArray(), PhysicsTransform.identity, Vector2.one, Allocator.Persistent);
+            _carveMask = Unity.U2D.Physics.PolygonGeometry.CreatePolygons(vertices.AsArray(), Unity.U2D.Physics.PhysicsTransform.identity, Vector2.one, Allocator.Persistent);
             vertices.Dispose();
         }
 
         private void SpawnRockBody()
         {
-            if (rockSprite == null || rockSprite.GetPhysicsShapeCount() == 0)
+            if (rockSprite == null || rockSprite.GetPhysicsOutlineCount() == 0)
             {
                 SpawnRockBox();
                 return;
@@ -185,11 +185,11 @@ namespace Game.Gameplay.Controllers.Terrain
         // carve a plain rectangular slab instead, so the rock needs no Sprite Editor step.
         private void SpawnRockBox()
         {
-            var box = PolygonGeometry.CreateBox(fallbackBoxSize, 0f, PhysicsTransform.identity);
-            var polygons = new NativeArray<PolygonGeometry>(1, Allocator.Temp) { [0] = box };
+            var box = Unity.U2D.Physics.PolygonGeometry.CreateBox(fallbackBoxSize, 0f, Unity.U2D.Physics.PhysicsTransform.identity);
+            var polygons = new NativeArray<Unity.U2D.Physics.PolygonGeometry>(1, Allocator.Temp) { [0] = box };
 
-            var body = _world.CreateBody(new PhysicsBodyDefinition { position = transform.position });
-            body.CreateShape(box, new PhysicsShapeDefinition
+            var body = _world.CreateBody(new Unity.U2D.Physics.PhysicsBodyDefinition { position = transform.position });
+            body.CreateShape(box, new Unity.U2D.Physics.PhysicsShapeDefinition
             {
                 contactFilter = _rockContactFilter,
                 surfaceMaterial = _rockSurfaceMaterial
@@ -201,18 +201,18 @@ namespace Game.Gameplay.Controllers.Terrain
 
         private void SpawnRockFromSprite()
         {
-            var composer = PhysicsComposer.Create(Allocator.Temp);
+            var composer = Unity.U2D.Physics.PhysicsComposer.Create(Allocator.Temp);
             composer.useDelaunay = true;
             var path = new NativeList<Vector2>(Allocator.Temp);
 
-            var outlines = rockSprite.GetPhysicsShapeCount();
+            var outlines = rockSprite.GetPhysicsOutlineCount();
             for (var i = 0; i < outlines; ++i)
             {
-                if (rockSprite.GetPhysicsShape(i, _outline) > 0)
+                if (rockSprite.GetPhysicsOutline(i, _outline) > 0)
                 {
                     foreach (var v in _outline)
                         path.Add(v);
-                    composer.AddLayer(path.AsArray(), PhysicsTransform.identity);
+                    composer.AddLayer(path.AsArray(), Unity.U2D.Physics.PhysicsTransform.identity);
                 }
                 path.Clear();
             }
@@ -224,8 +224,8 @@ namespace Game.Gameplay.Controllers.Terrain
             if (polygons.Length == 0)
                 return;
 
-            var body = _world.CreateBody(new PhysicsBodyDefinition { position = transform.position });
-            using var batch = body.CreateShapeBatch(polygons, new PhysicsShapeDefinition
+            var body = _world.CreateBody(new Unity.U2D.Physics.PhysicsBodyDefinition { position = transform.position });
+            using var batch = body.CreateShapeBatch(polygons, new Unity.U2D.Physics.PhysicsShapeDefinition
             {
                 contactFilter = _rockContactFilter,
                 surfaceMaterial = _rockSurfaceMaterial

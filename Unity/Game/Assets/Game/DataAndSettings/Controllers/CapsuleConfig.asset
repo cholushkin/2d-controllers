@@ -11,9 +11,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ed1ee0ddd91c44846994ee386b536d0c, type: 3}
   m_Name: CapsuleConfig
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   bodyRadius: 0.5
-  maxBatteries: 3
+  maxBatteries: 99
   maxEnergy: 1
   jumpHoldThreshold: 0.15
   ground:

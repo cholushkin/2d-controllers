@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Terrain
 {
@@ -11,9 +11,9 @@ namespace Game.Gameplay.Controllers.Terrain
     {
         [SerializeField] private FragmentMeshRenderer fragmentRenderer;
 
-        private readonly List<(PhysicsBody body, float expireAt)> _scheduled = new();
+        private readonly List<(Unity.U2D.Physics.PhysicsBody body, float expireAt)> _scheduled = new();
 
-        public void Register(PhysicsBody body, float lifetimeSeconds)
+        public void Register(Unity.U2D.Physics.PhysicsBody body, float lifetimeSeconds)
         {
             _scheduled.Add((body, Time.time + lifetimeSeconds));
         }

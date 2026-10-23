@@ -1,7 +1,7 @@
 using Game.Gameplay.Controllers.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Drone
 {
@@ -11,7 +11,7 @@ namespace Game.Gameplay.Controllers.Drone
         [SerializeField] private DroneConfig config;
         [SerializeField] private InputActionAsset inputActions;
 
-        private PhysicsBody _body;
+        private Unity.U2D.Physics.PhysicsBody _body;
         private ControllerContext _context;
         private ControllerStateMachine<DroneStateId> _machine;
         private IEnvironmentProbe _probe;
@@ -27,7 +27,7 @@ namespace Game.Gameplay.Controllers.Drone
             _probe = PhysicsWorldBootstrap.Probe;
 
             _body = LowLevelBody.CreateCircleBody(world, transform, config.bodyRadius,
-                PhysicsBody.BodyType.Dynamic, PhysicsCategories.Player,
+                Unity.U2D.Physics.PhysicsBody.BodyType.Dynamic, PhysicsCategories.Player,
                 PhysicsCategories.Ground | PhysicsCategories.Terrain, gravityScale: 0f);
 
             _energy = new EnergyModel(0, config.maxEnergy);

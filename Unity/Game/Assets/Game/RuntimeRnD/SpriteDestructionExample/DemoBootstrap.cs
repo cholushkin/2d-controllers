@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.LowLevelPhysics2D;
+
 
 public sealed class DemoBootstrap : MonoBehaviour
 {
@@ -17,7 +17,7 @@ public sealed class DemoBootstrap : MonoBehaviour
     {
         if (cam == null) cam = Camera.main;
 
-        var world = PhysicsWorld.defaultWorld;
+        var world = Unity.U2D.Physics.PhysicsWorld.defaultWorld;
         world.gravity = world.gravity * gravityScale;
 
         //CreateGround(world);
@@ -60,20 +60,20 @@ public sealed class DemoBootstrap : MonoBehaviour
         m_Destruction.Detonate(worldPoint);
     }
 
-    private static void CreateGround(PhysicsWorld world)
+    private static void CreateGround(Unity.U2D.Physics.PhysicsWorld world)
     {
         var body = world.CreateBody();
-        var def = new PhysicsShapeDefinition
+        var def = new Unity.U2D.Physics.PhysicsShapeDefinition
         {
-            contactFilter = new PhysicsShape.ContactFilter
+            contactFilter = new Unity.U2D.Physics.PhysicsShape.ContactFilter
             {
-                categories = new PhysicsMask(2),
-                contacts = new PhysicsMask(4) | new PhysicsMask(3)
+                categories = new Unity.U2D.Physics.PhysicsMask(2),
+                contacts = new Unity.U2D.Physics.PhysicsMask(4) | new Unity.U2D.Physics.PhysicsMask(3)
             }
         };
-        body.CreateShape(PolygonGeometry.CreateBox(new Vector2(110f, 10f), 0f, new PhysicsTransform(Vector2.down * 50f)), def);
-        body.CreateShape(PolygonGeometry.CreateBox(new Vector2(110f, 10f), 0f, new PhysicsTransform(Vector2.up * 50f)), def);
-        body.CreateShape(PolygonGeometry.CreateBox(new Vector2(10f, 100f), 0f, new PhysicsTransform(Vector2.left * 50f)), def);
-        body.CreateShape(PolygonGeometry.CreateBox(new Vector2(10f, 100f), 0f, new PhysicsTransform(Vector2.right * 50f)), def);
+        body.CreateShape(Unity.U2D.Physics.PolygonGeometry.CreateBox(new Vector2(110f, 10f), 0f, new Unity.U2D.Physics.PhysicsTransform(Vector2.down * 50f)), def);
+        body.CreateShape(Unity.U2D.Physics.PolygonGeometry.CreateBox(new Vector2(110f, 10f), 0f, new Unity.U2D.Physics.PhysicsTransform(Vector2.up * 50f)), def);
+        body.CreateShape(Unity.U2D.Physics.PolygonGeometry.CreateBox(new Vector2(10f, 100f), 0f, new Unity.U2D.Physics.PhysicsTransform(Vector2.left * 50f)), def);
+        body.CreateShape(Unity.U2D.Physics.PolygonGeometry.CreateBox(new Vector2(10f, 100f), 0f, new Unity.U2D.Physics.PhysicsTransform(Vector2.right * 50f)), def);
     }
 }

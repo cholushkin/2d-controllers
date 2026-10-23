@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 
 namespace Game.Gameplay.Controllers.Core
 {
@@ -14,7 +14,7 @@ namespace Game.Gameplay.Controllers.Core
         private static IEnvironmentProbe _probe;
         private static bool _configured;
 
-        public static PhysicsWorld World => PhysicsWorld.defaultWorld;
+        public static Unity.U2D.Physics.PhysicsWorld World => Unity.U2D.Physics.PhysicsWorld.defaultWorld;
         public static IEnvironmentProbe Probe => _probe ??= new EnvironmentProbe(World);
 
         private void Awake()
@@ -24,7 +24,7 @@ namespace Game.Gameplay.Controllers.Core
 
             var world = World;
             world.gravity *= gravityMultiplier;
-            world.simulationType = PhysicsWorld.SimulationType.FixedUpdate;
+            world.simulationType = Unity.U2D.Physics.PhysicsWorld.SimulationType.FixedUpdate;
             _configured = true;
         }
     }

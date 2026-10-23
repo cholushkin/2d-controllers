@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.LowLevelPhysics2D;
+
 
 // Draws each physics body as a mesh built from its polygons, UV-mapped to the source sprite texture.
 public sealed class FragmentRenderer : MonoBehaviour
 {
-    private readonly Dictionary<PhysicsBody, Transform> m_Views = new();
+    private readonly Dictionary<Unity.U2D.Physics.PhysicsBody, Transform> m_Views = new();
     private Material m_Material;
     private Vector2 m_UvScale;
 
@@ -17,7 +17,7 @@ public sealed class FragmentRenderer : MonoBehaviour
         m_UvScale = new Vector2(1f / spriteSize.x, 1f / spriteSize.y);
     }
 
-    public void Add(PhysicsBody body, NativeArray<PolygonGeometry> polygons)
+    public void Add(Unity.U2D.Physics.PhysicsBody body, NativeArray<Unity.U2D.Physics.PolygonGeometry> polygons)
     {
         var positions = new List<Vector3>();
         var uvs = new List<Vector2>();
@@ -62,7 +62,7 @@ public sealed class FragmentRenderer : MonoBehaviour
         m_Views[body] = go.transform;
     }
 
-    public void Remove(PhysicsBody body)
+    public void Remove(Unity.U2D.Physics.PhysicsBody body)
     {
         if (!m_Views.TryGetValue(body, out var view))
             return;
@@ -86,7 +86,7 @@ public sealed class FragmentRenderer : MonoBehaviour
 
             var p = body.transform.position;
             view.position = new Vector3(p.x, p.y, 0f);
-            view.rotation = Quaternion.Euler(0f, 0f, body.rotation.angle * Mathf.Rad2Deg);
+            view.rotation = Quaternion.Euler(0f, 0f, body.rotation.radians * Mathf.Rad2Deg);
         }
     }
 
